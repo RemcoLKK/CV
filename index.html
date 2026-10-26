@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My CV</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#222222">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    body { margin: 0; background: #444; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px; }
+    canvas { max-width: 100%; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,.4); background: #fff; }
+    a { color: #fff; font-family: sans-serif; }
+  </style>
+</head>
+<body>
+  <a href="cv.pdf" download>Download PDF</a>
+  <div id="pages"></div>
+  <script type="module">
+    import * as pdfjs from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs';
+    pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+
+    const pdf = await pdfjs.getDocument('cv.pdf').promise;
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 2 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      document.getElementById('pages').appendChild(canvas);
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    }
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+  </script>
+</body>
+</html>
