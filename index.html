@@ -11,6 +11,10 @@
     body { margin: 0; background: #444; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px; }
     canvas { max-width: 100%; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,.4); background: #fff; }
     a { color: #fff; font-family: sans-serif; }
+    .page { position: relative; max-width: 100%; }
+    .page canvas { display: block; width: 100%; }
+    .page a { position: absolute; display: block; }
+    .page a:hover { background: rgba(0,100,255,.12); }
   </style>
 </head>
 <body>
@@ -27,8 +31,32 @@
       const canvas = document.createElement('canvas');
       canvas.width = viewport.width;
       canvas.height = viewport.height;
-      document.getElementById('pages').appendChild(canvas);
+      const wrap = document.createElement('div');
+      wrap.className = 'page';
+      wrap.style.width = viewport.width / 2 + 'px';
+      wrap.appendChild(canvas);
+      document.getElementById('pages').appendChild(wrap);
       await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+      // Canvas rendering drops PDF links, so overlay clickable areas (in % so they scale with the page)
+      for (const a of await page.getAnnotations()) {
+        if (a.subtype !== 'Link' || !a.url) continue;
+        const [x1, y1, x2, y2] = viewport.convertToViewportRectangle(a.rect);
+        const link = document.createElement('a');
+        link.href = a.url;
+        if (/^https?:/.test(a.url)) {
+          link.target = '_blank';
+          link.rel = 'noopener';
+        }
+        link.title = a.url;
+        Object.assign(link.style, {
+          left: Math.min(x1, x2) / viewport.width * 100 + '%',
+          top: Math.min(y1, y2) / viewport.height * 100 + '%',
+          width: Math.abs(x2 - x1) / viewport.width * 100 + '%',
+          height: Math.abs(y2 - y1) / viewport.height * 100 + '%',
+        });
+        wrap.appendChild(link);
+      }
     }
 
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
