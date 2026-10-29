@@ -1,4 +1,4 @@
-const CACHE = 'cv-v2';
+const CACHE = 'cv-v3';
 const ASSETS = ['./', 'index.html', 'cv.pdf', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
